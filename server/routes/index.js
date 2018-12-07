@@ -1,19 +1,44 @@
 var express = require('express');
 var router = express.Router();
 
-var PouchDB = require('pouchdb');
-var db = new PouchDB('http://116.85.30.223:5984/traccar');
-db.info().then(function (info) {
-    console.log(info);
-})
+var elasticsearch = require('elasticsearch');
+var client = new elasticsearch.Client({
+    host: 'localhost:9200',
+    log: 'trace'
+});
+client.ping({
+    // ping usually has a 3000ms timeout
+    requestTimeout: 1000
+}, function (error) {
+    if (error) {
+        console.trace('elasticsearch cluster is down!');
+    } else {
+        console.log('All is well');
+    }
+});
 
-var flatten = require('flat')
+const flatten = require('flat')
 
 router.post('/', function (req, res, next) {
-    console.log(req.body.device.uniqueId, req.body.position);
+    // console.log(req.body);
+    console.log(req.body.device.uniqueId, req.body.position.latitude, req.body.position.longitude);
     let log = flatten(req.body);
-    log.timestamp = new Date(req.body.position.fixTime).getTime()
-    db.put(flatten(req.body));
+    log.timestamp = new Date(req.body.position.fixTime).getTime();
+    console.log(log)
+
+    client.index({
+        index: 'traccar',
+        body: log
+    },function(err,resp,status) {
+        console.log(resp);
+    });
+
+    // db.put(log)
+    //     .then(function (result) {
+    //         console.log(result)
+    //     }, function (err) {
+    //         console.error(err)
+    //     })
 
     res.send('ok');
 })
