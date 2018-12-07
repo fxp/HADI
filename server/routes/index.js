@@ -17,6 +17,19 @@ client.ping({
     }
 });
 
+/*
+client.indices.create({
+  index: 'traccar'
+},function(err,resp,status) {
+  if(err) {
+    console.log(err);
+  }
+  else {
+    console.log("create",resp);
+  }
+});
+
+*/
 const flatten = require('flat')
 
 router.post('/', function (req, res, next) {
@@ -28,9 +41,12 @@ router.post('/', function (req, res, next) {
 
     client.index({
         index: 'traccar',
+        type: 'position',
         body: log
     },function(err,resp,status) {
+        console.error(err);
         console.log(resp);
+        console.log(status);
     });
 
     // db.put(log)
@@ -50,5 +66,3 @@ router.get('/', function (req, res, next) {
 });
 
 module.exports = router;
-
-
